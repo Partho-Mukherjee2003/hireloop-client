@@ -54,7 +54,7 @@ export default function NavBar() {
 
             {/* Primary call to action */}
             <Link
-              href="/get-started"
+              href="/sign-up"
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "h-10 rounded-xl bg-indigo-500 px-5 text-white hover:bg-indigo-400"
@@ -105,7 +105,7 @@ export default function NavBar() {
               </Link>
 
               <Link
-                href="/get-started"
+                href="/sign-up"
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "mt-2 h-10 w-full rounded-xl bg-indigo-500 text-white hover:bg-indigo-400"
