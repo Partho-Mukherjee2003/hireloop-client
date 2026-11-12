@@ -7,6 +7,8 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 
+
+
 const LoginPage = () => {
   const router = useRouter()
   const [serverError, setServerError] = useState("")
@@ -72,8 +74,12 @@ const LoginPage = () => {
 
   // Runs when the Google button is clicked.
   // Add your Google sign in code inside this function.
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async() => {
     // TODO: add Google login functionality here
+    const data = await authClient.signIn.social({
+      provider: 'google'
+    })
+
   }
 
   return (
@@ -194,7 +200,7 @@ const LoginPage = () => {
         <p className="mt-6 text-center text-sm text-gray-400">
           Don&apos;t have an account?{" "}
           <Link
-            href="/sign-in"
+            href="/sign-up"
             className="text-indigo-400 hover:text-indigo-300"
           >
             Create one

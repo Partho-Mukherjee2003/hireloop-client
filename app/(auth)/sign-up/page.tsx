@@ -2,57 +2,68 @@
 "use client" // needed because we use useState and a form submit handler
 
 import { useState } from "react"
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react"
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation"
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Search,
+  Building2,
+  ShieldCheck,
+} from "lucide-react"
+import { authClient } from "@/lib/auth-client"
+
+// The roles shown as cards (value is saved, label and icon are shown).
+// The values must be the same as the roles in your lib/auth.ts file.
+const roles = [
+  { value: "seeker", label: "Job Seeker", icon: Search },
+  { value: "recruiter", label: "Recruiter", icon: Building2 },
+  { value: "admin", label: "Admin", icon: ShieldCheck },
+]
+
+// The type of the role. It has the same 3 values as your lib/auth.ts file.
+// TypeScript needs this because FormData gives us a plain string.
+type Role = "seeker" | "recruiter" | "admin"
 
 const SignUpPage = () => {
-  // Stores the error messages for each field (empty string = no error)
   const router = useRouter()
-  const [serverError, setServerError] = useState("") // error from the server
-  const [isLoading, setIsLoading] = useState(false)
+
+  // Error message for each field (empty string = no error)
   const [errors, setErrors] = useState({
     name: "",
     email: "",
+    role: "", // NEW: error for the role dropdown
     password: "",
     confirmPassword: "",
   })
+
+  const [serverError, setServerError] = useState("") // error from the server
+  const [isLoading, setIsLoading] = useState(false) // true while waiting
 
   // true = show the password as text, false = hide it with dots
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // signUp Function
-  const handleSignup = async (data:Record<string, string>) => {
-    setIsLoading(true)
-    setServerError("")
-    const { error } = await authClient.signUp.email({
-      email: data.email,
-      password: data.password,
-      name: data.name,
-      callbackURL: "/",
-    })
-setIsLoading(false)
-
-if (error) {
-  setServerError(error.message || "Something went wrong.")
-  return
-}
-
-router.push("/")
-  }
-
   // Runs when the form is submitted
-  const handleSubmit =  (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault() // stop the page from reloading
 
     // 1. Get all the form data using FormData + Object.fromEntries
     const formData = new FormData(e.currentTarget)
     const data = Object.fromEntries(formData) as Record<string, string>
-    const { name, email, password, confirmPassword } = data
-    // console.log(data)
+    console.log(data, 'From new from')
+    const { name, email, role, password, confirmPassword } = data // NEW: role added
+
     // 2. Validate each field
-    const newErrors = { name: "", email: "", password: "", confirmPassword: "" }
+    const newErrors = {
+      name: "",
+      email: "",
+      role: "", // NEW
+      password: "",
+      confirmPassword: "",
+    }
 
     if (name.trim().length < 2) {
       newErrors.name = "Name must be at least 2 characters."
@@ -60,6 +71,11 @@ router.push("/")
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       newErrors.email = "Please enter a valid email address."
+    }
+
+    // NEW: the user must pick one of the roles
+    if (!roles.some((item) => item.value === role)) {
+      newErrors.role = "Please select your role."
     }
 
     // Password rules: 8+ characters, at least one letter and one number
@@ -82,28 +98,43 @@ router.push("/")
     const hasError = Object.values(newErrors).some((msg) => msg !== "")
     if (hasError) return
 
-    // 5. Everything is valid. Send `data` to your backend here.
-    // console.log("Form data:", data)
+    // 5. Everything is valid, so create the account
+    setIsLoading(true)
+    setServerError("")
 
-    //  Sign Up Function
+    const { data:signupData ,  error } = await authClient.signUp.email({
+      name,
+      email,
+      password,
+      role: role as Role, // the role is sent together with name and password
+    })
 
-    handleSignup(data);
+    setIsLoading(false)
+
+    // If sign up failed, show the message and stop
+    if (error) {
+      setServerError(error.message || "Something went wrong.")
+      return
+    }
+
+    // Sign up worked, go to the home page
+    router.push("/")
+    console.log(signupData)
   }
 
   // Runs when the Google button is clicked.
   // Add your Google sign in code inside this function.
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn =async() => {
     // TODO: add Google sign in functionality here
+    const data = await authClient.signIn.social({
+      provider: "google",
+    })
   }
 
   return (
     // Full-screen black page. pt-28 leaves space for the fixed navbar.
     <main className="flex min-h-screen items-center justify-center bg-black px-4 pt-28 pb-10 text-white">
-      {/* Card with a purple glow coming from the form itself:
-          - bg-gradient: purple light inside the card (same color as the globe)
-          - border-indigo-500/30: soft glowing border
-          - shadow-[...]: purple light spreading outside the card
-          Make the last number (0.6) bigger for a stronger glow. */}
+      {/* Card with a purple glow coming from the form itself */}
       <div className="w-full max-w-md rounded-2xl border border-indigo-500/30 bg-gradient-to-b from-indigo-500/25 via-indigo-950/40 to-black/80 p-6 shadow-[0_0_90px_-10px_rgba(99,102,241,0.6)] backdrop-blur sm:p-8">
         {/* Heading */}
         <h1 className="text-center text-3xl font-bold">Sign Up</h1>
@@ -152,6 +183,36 @@ router.push("/")
               <p className="mt-1 text-xs text-red-400">{errors.email}</p>
             )}
           </div>
+
+          {/* ===== Role selection (3 cards, only one can be selected) ===== */}
+          <div>
+            <p className="mb-2 text-sm text-gray-300">I am a</p>
+
+            <div className="grid grid-cols-3 gap-2">
+              {roles.map(({ value, label, icon: Icon }) => (
+                <label key={value} className="cursor-pointer">
+                  {/* Hidden radio input. It still sends the value in FormData */}
+                  <input
+                    type="radio"
+                    name="role" // the key in FormData
+                    value={value}
+                    className="peer sr-only"
+                  />
+
+                  {/* The card. "peer-checked" styles it when the radio is selected */}
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-4 text-xs text-gray-400 transition peer-checked:border-indigo-500 peer-checked:bg-indigo-500/20 peer-checked:text-white peer-checked:shadow-[0_0_20px_-5px_rgba(99,102,241,0.8)] peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400 hover:bg-white/10">
+                    <Icon size={22} />
+                    <span className="font-medium">{label}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {errors.role && (
+              <p className="mt-1 text-xs text-red-400">{errors.role}</p>
+            )}
+          </div>
+          {/* ===== END of role selection ===== */}
 
           {/* Password */}
           <div>
@@ -221,10 +282,13 @@ router.push("/")
             )}
           </div>
 
-          {/* Submit button */}
+          {/* Error that comes from the server */}
           {serverError && <p className="text-sm text-red-400">{serverError}</p>}
+
+          {/* Submit button (disabled while loading so it cannot be clicked twice) */}
           <button
             type="submit"
+            disabled={isLoading}
             className="w-full rounded-xl bg-indigo-500 py-3 text-sm font-medium transition hover:bg-indigo-400 disabled:opacity-60"
           >
             {isLoading ? "Creating account..." : "Sign Up"}
