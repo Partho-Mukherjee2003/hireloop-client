@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
-import NavBar from "@/components/NavBar";
+
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
@@ -25,7 +25,7 @@ export default function RootLayout({
     >
       <body>
         <ThemeProvider>
-          <NavBar/>
+
           {children}
         </ThemeProvider>
       </body>
