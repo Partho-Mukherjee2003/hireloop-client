@@ -109,10 +109,11 @@ const DashboardSidebar = () => {
     router.refresh()
   }
   return (
-    // The inner part of the sidebar is made black to match the design
+    // The 3 parts (header, content, footer) have their own bg-black below.
+    // This way the sidebar is black on desktop AND in the mobile panel.
     <Sidebar className="border-white/10 [&_[data-slot=sidebar-inner]]:bg-black">
       {/* ---------- Top: logo and profile card ---------- */}
-      <SidebarHeader className="gap-4 p-4">
+      <SidebarHeader className="gap-4 bg-black p-4">
         <Link href="/" aria-label="HireLoop home">
           <Image src={logo} alt="HireLoop" className="h-9 w-auto" />
         </Link>
@@ -145,7 +146,7 @@ const DashboardSidebar = () => {
       </SidebarHeader>
 
       {/* ---------- Middle: menu for the user's role ---------- */}
-      <SidebarContent>
+      <SidebarContent className="bg-black">
         <SidebarGroup>
           <SidebarMenu>
             {/* Wait until we know the role, so the wrong menu never flashes */}
@@ -161,7 +162,7 @@ const DashboardSidebar = () => {
                   <SidebarMenuButton
                     render={<Link href={item.url} />}
                     isActive={isActive(item.url)}
-                    className="text-white/60 hover:bg-white/5 hover:text-white data-[active=true]:bg-white/10 data-[active=true]:text-white"
+                    className="text-white/60 hover:bg-white/5 hover:text-white data-active:bg-white/10 data-active:text-white"
                   >
                     <item.icon />
                     <span>{item.name}</span>
@@ -173,7 +174,7 @@ const DashboardSidebar = () => {
       </SidebarContent>
 
       {/* ---------- Bottom: Post Resume (seeker only) and Logout ---------- */}
-      <SidebarFooter className="gap-2 p-4">
+      <SidebarFooter className="gap-2 bg-black p-4">
         {role === "seeker" && (
           <Link
             href="/dashboard/post-resume"
