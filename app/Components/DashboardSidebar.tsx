@@ -15,6 +15,7 @@ import {
   Building2,
   LogOut,
   type LucideIcon,
+  Plus,
 } from "lucide-react"
 
 import logo from "@/app/assets/logo.png"
@@ -39,7 +40,7 @@ type MenuItem = { name: string; url: string; icon: LucideIcon }
 // ===== The menu for each role. Add or remove items here. =====
 const menuItemsByRole: Record<Role, MenuItem[]> = {
   seeker: [
-    { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", url: "/dashboard/seeker", icon: LayoutDashboard },
     { name: "Jobs", url: "/jobs", icon: Briefcase },
     { name: "Saved Jobs", url: "/dashboard/saved-jobs", icon: Bookmark },
     { name: "Applications", url: "/dashboard/applications", icon: FileText },
@@ -47,13 +48,26 @@ const menuItemsByRole: Record<Role, MenuItem[]> = {
     { name: "Settings", url: "/dashboard/settings", icon: Settings },
   ],
   recruiter: [
-    { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { name: "Manage Jobs", url: "/dashboard/manage-jobs", icon: Briefcase },
-    { name: "Applications", url: "/dashboard/applications", icon: FileText },
+    { name: "Dashboard", url: "/dashboard/recruiter", icon: LayoutDashboard },
+    {
+      name: "Manage Jobs",
+      url: "/dashboard/recruiter/manage-jobs",
+      icon: Briefcase,
+    },
+    {
+      name: "Add Jobs",
+      url: "/dashboard/recruiter/manage-jobs/add-jobs",
+      icon: Plus,
+    },
+    {
+      name: "Applications",
+      url: "/dashboard/recruiter/application",
+      icon: FileText,
+    },
     { name: "Settings", url: "/dashboard/settings", icon: Settings },
   ],
   admin: [
-    { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", url: "/dashboard/admin", icon: LayoutDashboard },
     { name: "Manage Users", url: "/dashboard/manage-users", icon: Users },
     { name: "Manage Jobs", url: "/dashboard/manage-jobs", icon: Briefcase },
     { name: "Companies", url: "/dashboard/companies", icon: Building2 },
@@ -77,12 +91,16 @@ const DashboardSidebar = () => {
   const user = session?.user
   const role = (user?.role ?? "seeker") as Role
 
-  // A menu item is active when we are on its page.
-  // "/dashboard" must match exactly, or it would be active on every dashboard page.
-  const isActive = (url: string) =>
-    url === "/dashboard"
-      ? pathname === url
-      : pathname === url || pathname.startsWith(url + "/")
+  // Find the one menu item that best matches the current page.
+  // The longest matching url wins, so only ONE item is active.
+  const activeUrl = menuItemsByRole[role]
+    .filter(
+      (item) => pathname === item.url || pathname.startsWith(item.url + "/")
+    )
+    .sort((a, b) => b.url.length - a.url.length)[0]?.url
+
+  // An item is active only if it is that best match
+  const isActive = (url: string) => url === activeUrl
 
   // Log out, then go to the home page
   const handleLogout = async () => {
@@ -90,7 +108,6 @@ const DashboardSidebar = () => {
     router.push("/")
     router.refresh()
   }
-
   return (
     // The inner part of the sidebar is made black to match the design
     <Sidebar className="border-white/10 [&_[data-slot=sidebar-inner]]:bg-black">

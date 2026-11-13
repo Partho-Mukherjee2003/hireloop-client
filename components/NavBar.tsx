@@ -11,13 +11,6 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth-client"
 
-// Links shown in the desktop bar and inside the mobile menu.
-const navLinks = [
-  { label: "Browse Jobs", href: "/jobs" },
-  { label: "Company", href: "/companies" },
-  { label: "Pricing", href: "/pricing" },
-]
-
 export default function NavBar() {
   // Controls the mobile dropdown panel.
   const [isOpen, setIsOpen] = useState(false)
@@ -30,6 +23,20 @@ export default function NavBar() {
   // session.user is the logged in user. isPending is true while it is loading.
   const { data: session, isPending } = authClient.useSession()
   const user = session?.user
+
+  // The role of the logged in user (seeker, recruiter or admin)
+  const role = user?.role || "seeker"
+
+  // Links shown in the desktop bar and inside the mobile menu.
+  // It is inside the component because it needs the session (for the role).
+  const navLinks = [
+    // Dashboard link is only added when the user is logged in.
+    // The href changes with the role: /dashboard/seeker, /dashboard/recruiter ...
+    ...(user ? [{ label: "Dashboard", href: `/dashboard/${role}` }] : []),
+    { label: "Browse Jobs", href: "/jobs" },
+    { label: "Company", href: "/companies" },
+    { label: "Pricing", href: "/pricing" },
+  ]
 
   // NEW: a link is "active" when we are on that page (or a page inside it)
   const isActive = (href: string) =>
